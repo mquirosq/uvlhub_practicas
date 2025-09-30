@@ -11,6 +11,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
     services:
       mysql:
         image: mysql:5.7
@@ -27,10 +32,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
@@ -40,6 +45,18 @@ jobs:
     - name: Check for outdated dependencies
       run: | 
         pip list --outdated
+
+    - name: Security audit with pip-audit
+      run: |
+        pip install pip-audit
+        pip-audit --format=json --output=security-report.json || true
+        pip-audit --format=text
+
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-report
+        path: security-report.json
 
     - name: Upload coverage to Codacy
       run: |
@@ -55,3 +72,4 @@ jobs:
         MARIADB_USER: uvlhub_user
         MARIADB_PASSWORD: uvlhub_password
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      if: matrix.python-version == '3.12' # Subir solo para Python 3.12 para evitar duplicados
