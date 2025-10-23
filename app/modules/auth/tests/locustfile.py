@@ -47,7 +47,6 @@ class LoginBehavior(TaskSet):
         if response.status_code != 200:
             print(f"Login failed: {response.status_code}")
 
-
 class AuthUser(HttpUser):
     tasks = [SignupBehavior, LoginBehavior]
     min_wait = 5000
